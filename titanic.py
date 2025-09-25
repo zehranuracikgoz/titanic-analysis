@@ -9,7 +9,7 @@ import time
 # Titanic verisi
 df = sns.load_dataset('titanic')
 
-############# Background image ###############
+#background
 def get_base64_of_bin_file(bin_file):
     with open(bin_file, 'rb') as f:
         data = f.read()
@@ -44,7 +44,7 @@ page_bg_img = f"""
 st.markdown(page_bg_img, unsafe_allow_html=True)
 st.set_page_config(layout="wide")
 
-############# Basic stats ###############
+#basics
 total_passengers = df.shape[0]
 total_children = (df['who'] == 'child').sum()
 total_female = (df['who'] == 'woman').sum()
@@ -71,14 +71,14 @@ st.markdown(f"""
   </div>
 """, unsafe_allow_html=True)
 
-############# Survived animation ###############
+#survived
 survived_placeholder = st.empty()
 
 for i in range(total_survived + 1):
     survived_placeholder.markdown(f"<div class='survived'>{i} passengers survived out of {total_passengers} passengers.</div>", unsafe_allow_html=True)
     time.sleep(0.0001)
 
-############# Embarked Analysis ###############
+#embarked icin
 st.markdown(
     "<h1 style='text-align:center; color:#4682B4; font-size:30px; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-up: 10px;'>Passenger Distribution by Embarked</h2>",
     unsafe_allow_html=True
@@ -91,7 +91,6 @@ df['embarked'] = df['embarked'].cat.rename_categories({'S':'Southampton', 'C':'C
 embarked_counts = df['embarked'].value_counts().reset_index()
 embarked_counts.columns = ['Embarked', 'Count']
 
-# Bar chart
 fig = px.bar(
     embarked_counts,
     x='Embarked',
@@ -100,15 +99,14 @@ fig = px.bar(
     text='Count',
     title='Passenger Distribution by Embarked',
     color_discrete_map={
-        'Southampton':'#0D3B66',  # derin mavi
-        'Cherbourg':'#F4D35E',     # altın sarısı
-        'Queenstown':'#FFAD60',    # soft turuncu
-        'Unknown':'#95A5A6'        # gri ton
+        'Southampton':'#0D3B66',
+        'Cherbourg':'#F4D35E',
+        'Queenstown':'#FFAD60',
+        'Unknown':'#95A5A6'
     },
     hover_data={'Embarked': True, 'Count': True},
 )
 
-# Bar stilini güncelle
 fig.update_traces(
     textposition='inside',
     marker_line_width=1.5,
@@ -116,7 +114,6 @@ fig.update_traces(
     opacity=0.9
 )
 
-# Layout ayarları
 fig.update_layout(
     width=800,
     height=500,
@@ -127,13 +124,11 @@ fig.update_layout(
     showlegend=False
 )
 
-# Grafiği ortalamak için Streamlit sütunları
-col1, col2, col3 = st.columns([1,2,1])  # 1:2:1 oranı, ortadaki sütun geniş
+col1, col2, col3 = st.columns([1,2,1])
 with col2:
     st.plotly_chart(fig, use_container_width=False)
 
-############# Passenger Class Analysis ###############
-# En üstte başlık
+#passenger class icin
 st.markdown(
     "<h1 style='text-align:center; color:#4682B4; font-size:30px; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-bottom:30px;'>Passenger Class Analysis</h1>",
     unsafe_allow_html=True
@@ -145,12 +140,10 @@ df['pclass'] = df['pclass'].replace({1:'1st Class', 2:'2nd Class', 3:'3rd Class'
 class_counts = df['pclass'].value_counts().reset_index()
 class_counts.columns = ['Passenger Class','Count']
 
-# Metric göstergeleri
 cols = st.columns(len(class_counts))
 for i, row in enumerate(class_counts.itertuples(index=False)):
     cols[i].metric(label=row[0], value=row[1])
 
-# Pie Chart
 fig_class_pie = px.pie(
     class_counts, 
     names='Passenger Class', 
@@ -168,3 +161,50 @@ fig_class_pie.update_layout(
 )
 
 st.plotly_chart(fig_class_pie, use_container_width=True)
+
+### yaş analizi için
+st.markdown(
+    "<h1 style='text-align:center; color:#4682B4; font-size:30px; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-bottom:30px;'>Age Analysis</h1>",
+    unsafe_allow_html=True
+)
+
+col1, col2 =st.columns(2)
+with col1:
+    survived_filter = st.multiselect(
+        "Survived",
+        options=[0, 1],
+        default=[0, 1],
+        format_func=lambda x: "Unalive" if x==0 else "Alive"
+    )
+
+with col2:
+    sex_options_display = ["All", "Male", "Female"]
+    sex_filter_display = st.radio(
+        "Sex",
+        options=sex_options_display,
+        index=0,
+        horizontal=True
+    )
+
+filtered_df = df[df['survived'].isin(survived_filter)]
+if sex_filter_display != "All":
+    filtered_df = filtered_df[filtered_df['sex'].str.lower() == sex_filter_display.lower()]
+
+fig = px.histogram(
+    filtered_df,
+    x='age',
+    color='survived',
+    nbins=30,
+    color_discrete_map={0:'red', 1:'green'},
+    labels={'survived':'Survived'}
+)
+
+fig.update_layout(
+    width=600,
+    height=300,
+    margin=dict(l=40, r=40, t=40, b=40),
+    xaxis_title="Age",
+    yaxis_title="Passenger Count"
+)
+
+st.plotly_chart(fig)
