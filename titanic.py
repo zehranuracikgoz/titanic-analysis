@@ -1,7 +1,5 @@
 import seaborn as sns
-import matplotlib.pyplot as plt
 import streamlit as st
-import pandas as pd
 import plotly.express as px
 import base64
 import time
@@ -78,6 +76,27 @@ for i in range(total_survived + 1):
     survived_placeholder.markdown(f"<div class='survived'>{i} passengers survived out of {total_passengers} passengers.</div>", unsafe_allow_html=True)
     time.sleep(0.0001)
 
+#survival rate icin
+survival_rate = round((total_survived / total_passengers) * 100, 2)
+st.markdown(f"""
+<div style="
+    width:300px;
+    margin:auto;
+    margin-bottom: 15px;
+    background-color:rgba(0,0,0,0);
+    border-radius:15px;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
+    color:white;
+    font-weight:bold;">
+    Survival Rate: {survival_rate}% 
+    <div style="margin-top:10px;">
+        <progress value="{survival_rate}" max="100" style="width:200px; height:20px; accent-color:green;"></progress>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 #embarked icin
 st.markdown(
     "<h1 style='text-align:center; color:#4682B4; font-size:30px; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); margin-up: 10px;'>Passenger Distribution by Embarked</h2>",
@@ -97,7 +116,6 @@ fig = px.bar(
     y='Count',
     color='Embarked',
     text='Count',
-    title='Passenger Distribution by Embarked',
     color_discrete_map={
         'Southampton':'#0D3B66',
         'Cherbourg':'#F4D35E',
@@ -159,7 +177,6 @@ fig_class_pie.update_layout(
     showlegend=True,
     font=dict(color='white')
 )
-
 st.plotly_chart(fig_class_pie, use_container_width=True)
 
 ### yaş analizi için
@@ -208,3 +225,30 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig)
+
+#iliskilerini gorebilmek icin heatmap
+st.markdown(
+    "<h1 style='text-align:center; color:#4682B4; font-size:30px; margin-bottom:30px;'>Correlation Heatmap</h1>", 
+    unsafe_allow_html=True
+)
+
+numeric_df = df.select_dtypes(include=['float64','int64']).drop(columns=['sibsp'])
+
+fig = px.imshow(
+    numeric_df.corr(),
+    text_auto=".2f",
+    color_continuous_scale='Blues',
+)
+
+fig.update_layout(
+    width=700,
+    height=600,
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font=dict(color='white')
+)
+
+col1, col2, col3 = st.columns([1,2,1])
+with col2:
+    st.plotly_chart(fig, use_container_width=False)
+
